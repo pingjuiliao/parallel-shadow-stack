@@ -76,6 +76,9 @@ FunctionPass *createX86FlagsCopyLoweringPass();
 /// Return a pass that expands WinAlloca pseudo-instructions.
 FunctionPass *createX86WinAllocaExpander();
 
+/// Return a pass that enables shadow stack
+FunctionPass *createX86ShadowStack() ;
+
 /// Return a pass that config the tile registers.
 FunctionPass *createX86TileConfigPass();
 

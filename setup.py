@@ -11,13 +11,11 @@ def error(msg) :
 
 def build_llvm() :
 
-
-
     llvm_root = os.path.abspath("./llvm-project-13.0.0.src")
     llvm_build= llvm_root + "/build"
     clang = llvm_build + "/bin/clang"
-    if os.path.exists(clang) :
-        return
+    #if os.path.exists(clang) :
+    #    return
 
     if not os.path.exists(llvm_root) :
         error("Please change directory to the root of repo")
@@ -47,6 +45,9 @@ def build_llvm() :
     os.system('make -j %d' % nproc)
     os.chdir(pwd)
 
+
+## for IR pass:
+"""
 def build_pass() :
     build_dir = os.path.abspath("./build")
     if not os.path.exists(build_dir) :
@@ -58,10 +59,10 @@ def build_pass() :
 
     # make
     os.system('make -j %d' % nproc)
+"""
 
 def main() :
     build_llvm()
-    # build_pass()
     print("Done !")
 
 if __name__ == '__main__' :
