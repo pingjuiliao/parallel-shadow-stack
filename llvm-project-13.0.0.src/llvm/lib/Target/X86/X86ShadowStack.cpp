@@ -3,6 +3,7 @@
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -220,12 +221,20 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
 void
 X86ShadowStack::findAndWriteEpilogue(MachineFunction &MF) {
     // TODO: this is weird
+    SmallVector<MachineBasicBlock *, 4> retBBs;
     for ( auto &MBB: MF ) {
-        MachineInstr &MI = MBB.instr_back() ;
-        if ( MI.isReturn() ) {
-            writeEpilogue(MBB);             
-        }   
+        // MachineInstr &MI = MBB.instr_back() ;
+        for ( auto &MI: MBB ) {
+            if ( MI.isReturn() ) {
+                // writeEpilogue(MBB);
+                retBBs.push_back(&MBB) ;
+                break ;
+            }   
+        }
     }
+    for (size_t i =0 ; i < retBBs.size(); ++i ) {
+        writeEpilogue(*retBBs[i]);
+    } 
 }
 
 
