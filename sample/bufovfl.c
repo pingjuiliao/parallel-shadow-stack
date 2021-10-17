@@ -13,6 +13,7 @@ void
 bufovfl(void) {
     char buf[10] ;
     char* r ;
+    puts("Type anything to overflow this buffer") ;
     if ( (r = fgets(buf, 50, stdin)) == NULL) {
         exit(-1) ;
     }
