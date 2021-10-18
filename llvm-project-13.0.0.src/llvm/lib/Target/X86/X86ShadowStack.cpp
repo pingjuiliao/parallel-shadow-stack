@@ -175,8 +175,8 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
      * 6) mov %r1, %rsp
      ****************************/
     
-    Register R0 = X86::R13 ;
-    Register R1 = X86::R14 ;
+    Register R0 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
+    Register R1 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
     
     
     // 1 )
@@ -255,8 +255,8 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
      * 5) mov %rsp, %gs:108
      * 6) mov %r0, %rsp
      *********************/
-    Register R0 = X86::R13 ;
-    Register R1 = X86::R14 ;
+    Register R0 = MBB.getParent()->getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
+    Register R1 = MBB.getParent()->getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
     
     // 1)
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), R0)
