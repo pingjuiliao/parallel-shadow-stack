@@ -501,7 +501,6 @@ void X86PassConfig::addPreRegAlloc() {
     addPass(createX86AvoidStoreForwardingBlocks());
   }
 
-  addPass(createX86ShadowStack()) ;
   addPass(createX86SpeculativeLoadHardeningPass());
   addPass(createX86FlagsCopyLoweringPass());
   addPass(createX86WinAllocaExpander());
@@ -510,6 +509,7 @@ void X86PassConfig::addPreRegAlloc() {
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(createX86PreTileConfigPass());
   }
+  addPass(createX86ShadowStack()) ;
 }
 
 void X86PassConfig::addMachineSSAOptimization() {

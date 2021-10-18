@@ -70,10 +70,14 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     if ( !STI->is64Bit() ) {
         return false ;
     }
+    // TODO: inline function should not be instrumented 
+    // if ( MF.hasInlineAsm() ) return false ; // this changes nothing
     
+
     if ( MF.getName() == "main" ) {
         initShadowStack(MF) ;
-    } else {
+    } else if ( MF.getName() != "swap" ){
+        errs() << MF.getName() << "() is protected by shadow stack\n" ;
         writePrologue(MF) ; 
         findAndWriteEpilogue(MF) ;
     }

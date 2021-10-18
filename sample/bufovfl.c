@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 void bufovfl(void) ;
+// end .h
+
 int
 main(int argc, char ** argv) {
+    
     bufovfl() ;
     return 0;
 }
