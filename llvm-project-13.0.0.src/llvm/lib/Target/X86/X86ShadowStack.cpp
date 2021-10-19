@@ -219,53 +219,7 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
         .addReg(0)
         .addReg(R0) ;
 
-    // assembly
-    /****************************
-     * 1) mov %rsp, %r1
-     * 2) mov %gs:108, %rsp
-     * 3) mov 0x8(%rbp), %r0 
-     * 4) push %r0
-     * 5) mov %rsp, %gs:108
-     * 6) mov %r1, %rsp
-     ****************************
-    // 1 )
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), R0)
-        .addReg(stackPtr);
-
-    // 2)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), stackPtr)
-        .addReg(0)
-        .addImm(1)
-        .addReg(0)
-        .addImm(0x108)
-        .addReg(X86::GS) ;
-
-    // 3 )
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
-        .addReg(framePtr)  // base
-        .addImm(1)        // scale
-        .addReg(0x0)      // index
-        .addImm(0x8)
-        .addReg(0x0) ;
-    
-
-    // 4)
-    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), R1) ;
-    BuildMI(MBB, I, DL, TII->get(X86::POP64r), R1) ;
-
-    // 5)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(0)
-        .addImm(1)
-        .addReg(0)
-        .addImm(0x108)
-        .addReg(X86::GS)
-        .addReg(stackPtr);
-
-    // 6)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), stackPtr)
-        .addReg(R0);
-    */
+     
 }
 
 void
@@ -331,49 +285,5 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addImm(0x8)
         .addReg(0)
         .addReg(R1) ;
-    /*******************
-     * 1) mov %rsp, %r0
-     * 2) mov %gs:108, %rsp
-     * 3) pop %r1
-     * 4) mov %r1, 0x8(%rbp)
-     * 5) mov %rsp, %gs:108
-     * 6) mov %r0, %rsp
-     ********************
-    // 1)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), R0)
     
-    // 2)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), stackPtr)
-        .addReg(0)
-        .addImm(1)
-        .addReg(0)
-        .addImm(0x108)
-        .addReg(X86::GS);
-    
-    // 3)
-    BuildMI(MBB, I, DL, TII->get(X86::POP64r), R1);
-
-    // 4)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(framePtr)
-        .addImm(1)
-        .addReg(0)
-        .addImm(0x8)
-        .addReg(0)
-        .addReg(R1);
-
-    // 5)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(0)
-        .addImm(1)
-        .addReg(0)
-        .addImm(0x108)
-        .addReg(X86::GS)
-        .addReg(stackPtr) ;
-
-
-    // 6)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), stackPtr)
-        .addReg(R0) ;
-    }*/
 }

@@ -1,0 +1,49 @@
+
+1. PUSH/POP style V.S. MOV64 style
+
+PUSH/POP style does not work properly because llvm tries to, maybe via a pass, match the number of push/pop in each code site (maybe machine basic block?). For example, in the following prologue/epilogue:
+
+// Prologue                   // Epilogue
+/**************************** /***************************
+ * 1) mov %rsp, %r0            * 1) mov %rsp, %r0
+ * 2) mov %gs:108, %rsp        * 2) mov %gs:108, %rsp
+ * 3) mov 0x8(%rbp), %r1       * 3) pop %r1
+ * 4) push %r1                 * 4) mov %r1, 0x8(%rsp)
+ * 5) mov %rsp, %gs:108        * 5) mov %rsp, %gs:108
+ * 6) mov %r0, %rsp            * 6) mov %r0, %rsp
+ *****************************/****************************
+
+We will get:
+// Prologue                   // Epilogue
+/**************************** /***************************
+ * X) pop %r1                  * X) push %r1
+ * 1) mov %rsp, %r0            * 1) mov %rsp, %r0
+ * 2) mov %gs:108, %rsp        * 2) mov %gs:108, %rsp
+ * 3) mov 0x8(%rbp), %r1       * 3) pop %r1
+ * 4) push %r1                 * 4) mov %r1, 0x8(%rsp)
+ * 5) mov %rsp, %gs:108        * 5) mov %rsp, %gs:108
+ * 6) mov %r0, %rsp            * 6) mov %r0, %rsp
+ *****************************/****************************
+
+Though we can make a proper push/pop ourselves, but it uses more instructions so I switch to the MOV64 style.
+
+2. reading/writing return address  0x8(%rbp) before pop  V.S. 0x0(%rsp) before ret
+it seems like that the frame pointer is setup after my shadow stack pass is added in the last step of
+X86TargetMachine::addPreRegAlloc() so 0x0(%rsp) does not work because there are more instructions added
+between ret and my instrumented assembly.
+
+My intended epilogue
+*******************
+* mov %ret_addr_shadow, 0x0(%rsp)
+* ret
+***********************************
+
+becomes
+*******************
+* mov %ret_addr_shadow, 0x0(%rsp)
+* sub $0x20, %rsp
+* pop %rbp
+* ret
+***********************************
+
+
