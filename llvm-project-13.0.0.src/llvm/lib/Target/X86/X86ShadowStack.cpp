@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/raw_ostream.h"
-
+#define DEBUG
 using namespace llvm ;
 
 
@@ -74,7 +74,6 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     if ( !STI->is64Bit() ) {
         return false ;
     }
-    // if ( MF.hasInlineAsm() ) return false ; // this changes nothing
          
 
     if ( MF.getName() == "main" ) {
@@ -82,8 +81,9 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
         return true ;
     } 
 
-    // TODO: inline function should not be instrumented 
-    // errs() << MF.getName() << "() is protected by shadow stack\n" ;
+#ifdef DEBUG    
+    errs() << MF.getName() << "() is protected by shadow stack\n" ;
+#endif
     writePrologue(MF) ; 
     findAndWriteEpilogue(MF) ;
     
@@ -237,11 +237,18 @@ X86ShadowStack::findAndWriteEpilogue(MachineFunction &MF) {
 void 
 X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
 
-    // get first instruction
+    // get last instruction
+    // MachineBasicBlock::iterator it = MBB.end() ; <--- this will instrument code after ret
     MachineInstr &I = MBB.back() ;
     MachineBasicBlock::iterator it = I.getIterator() ;
     const DebugLoc &DL = it->getDebugLoc() ;
     
+#ifdef DEBUG
+    for (auto &MI: MBB) {
+        errs() << MI << "\n" ;
+    }
+#endif
+
     // assembly
     /******************
      * 1) mov %gs:108, %r0

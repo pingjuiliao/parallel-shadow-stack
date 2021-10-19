@@ -46,4 +46,33 @@ becomes
 * ret
 ***********************************
 
+Example output: Traverse of machine instructions in the return machine basic block
+```
+ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead "flags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
 
+ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead "flags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
+
+$rdi = COPY %0:gr64
+
+"si = COPY %4:gr32
+
+"dx = COPY %3:gr32
+
+$al = COPY %2:gr8
+
+CALL64pcrel32 @printf, <regmask $bh $bl $bp $bph $bpl $bx "bp "bx $hbp $hbx $rbp $rbx $r12 $r13 $r14 $r15 $r12b $r13b $r14b $r15b $r12bh $r13bh $r14bh $r15bh $r12d $r13d $r14d $r15d $r12w $r13w $r14w $r15w $r12wh and 3 more...>, implicit $rsp, implicit $ssp, implicit $rdi, implicit "si, implicit "dx, implicit $al, implicit-def $rsp, implicit-def $ssp, implicit-def "ax
+
+ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead "flags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
+
+RET 0
+""""""""""
+```
+
+
+
+
+I think it's because the X86FrameLowering happens after addRegAlloc
+Maybe I can use X86FrameLowering::emitEpilogue to avoid such problem
+
+3. Not to instrument inline functions
+no need to anything else
