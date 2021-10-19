@@ -9,6 +9,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -40,7 +41,9 @@ private:
     // Machine instruction builder requirements
     const X86Subtarget    *STI = nullptr ;
     const TargetInstrInfo *TII = nullptr ;
+    // register
     MachineRegisterInfo   *MRI = nullptr ;
+    const X86RegisterInfo *TRI = nullptr ;
 
     // pass registration
     StringRef getPassName() const override { return "X86 Shadow Stack" ; }
@@ -64,23 +67,26 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     // global setup
     MRI = &MF.getRegInfo() ;
     STI = &MF.getSubtarget<X86Subtarget>() ;
+    TRI = STI->getRegisterInfo() ;
     TII = STI->getInstrInfo() ;
     
     // 64-bit only
     if ( !STI->is64Bit() ) {
         return false ;
     }
-    // TODO: inline function should not be instrumented 
     // if ( MF.hasInlineAsm() ) return false ; // this changes nothing
-    
+         
 
     if ( MF.getName() == "main" ) {
         initShadowStack(MF) ;
-    } else if ( MF.getName() != "swap" ){
-        errs() << MF.getName() << "() is protected by shadow stack\n" ;
-        writePrologue(MF) ; 
-        findAndWriteEpilogue(MF) ;
-    }
+        return true ;
+    } 
+
+    // TODO: inline function should not be instrumented 
+    // errs() << MF.getName() << "() is protected by shadow stack\n" ;
+    writePrologue(MF) ; 
+    findAndWriteEpilogue(MF) ;
+    
     return true ;
 }
 
@@ -100,6 +106,7 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
      * 4) get stack top     : %stack_top  = %stack_base + STACKSIZE - 8 ;
      * 5) set %gs:108       : mov %stack_top, %gs:108 ;
      ***********************/
+
     // 1) %rax = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
     BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
         .addImm(0x0) ;
@@ -171,24 +178,62 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
     
     // assembly
     /****************************
+     * 1) sub $0x8, %gs:108
+     * 2) mov 0x8(%rbp), %r0 
+     * 3) mov %gs:108, %r1 
+     * 4) mov %r0, 0x0(%r1)
+     ****************************/
+    Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
+    Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
+    // Register stackPtr = TRI->getStackRegister() ;
+    Register framePtr = TRI->getFramePtr() ;
+    
+
+    BuildMI(MBB, I, DL, TII->get(X86::SUB64mi32))
+        .addReg(0)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x108)
+        .addReg(X86::GS)
+        .addImm(QWORDSIZE) ;
+    
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
+        .addReg(framePtr)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x8)
+        .addReg(0);
+
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
+        .addReg(0)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x108)
+        .addReg(X86::GS);
+
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
+        .addReg(R1)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x0)
+        .addReg(0)
+        .addReg(R0) ;
+
+    // assembly
+    /****************************
      * 1) mov %rsp, %r1
      * 2) mov %gs:108, %rsp
      * 3) mov 0x8(%rbp), %r0 
      * 4) push %r0
      * 5) mov %rsp, %gs:108
      * 6) mov %r1, %rsp
-     ****************************/
-    
-    Register R0 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
-    Register R1 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
-    
-    
+     ****************************
     // 1 )
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), R0)
-        .addReg(X86::RSP);
+        .addReg(stackPtr);
 
     // 2)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), X86::RSP)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), stackPtr)
         .addReg(0)
         .addImm(1)
         .addReg(0)
@@ -197,7 +242,7 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
 
     // 3 )
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
-        .addReg(X86::RBP) // base
+        .addReg(framePtr)  // base
         .addImm(1)        // scale
         .addReg(0x0)      // index
         .addImm(0x8)
@@ -206,6 +251,7 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
 
     // 4)
     BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), R1) ;
+    BuildMI(MBB, I, DL, TII->get(X86::POP64r), R1) ;
 
     // 5)
     BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
@@ -214,31 +260,22 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
         .addReg(0)
         .addImm(0x108)
         .addReg(X86::GS)
-        .addReg(X86::RSP);
+        .addReg(stackPtr);
 
     // 6)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), X86::RSP)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), stackPtr)
         .addReg(R0);
-
+    */
 }
 
 void
 X86ShadowStack::findAndWriteEpilogue(MachineFunction &MF) {
-    // TODO: this is weird
-    SmallVector<MachineBasicBlock *, 4> retBBs;
+    
     for ( auto &MBB: MF ) {
-        // MachineInstr &MI = MBB.instr_back() ;
-        for ( auto &MI: MBB ) {
-            if ( MI.isReturn() ) {
-                // writeEpilogue(MBB);
-                retBBs.push_back(&MBB) ;
-                break ;
-            }   
+        if ( MBB.isReturnBlock() ) {
+            writeEpilogue(MBB) ;
         }
     }
-    for (size_t i =0 ; i < retBBs.size(); ++i ) {
-        writeEpilogue(*retBBs[i]);
-    } 
 }
 
 
@@ -247,27 +284,66 @@ void
 X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
 
     // get first instruction
-    MachineBasicBlock::iterator I = MBB.begin() ;
-    const DebugLoc &DL = I->getDebugLoc() ;
+    MachineInstr &I = MBB.back() ;
+    MachineBasicBlock::iterator it = I.getIterator() ;
+    const DebugLoc &DL = it->getDebugLoc() ;
     
     // assembly
     /******************
+     * 1) mov %gs:108, %r0
+     * 2) add $0x8, %gs:108
+     * 3) mov (%r0), %r1
+     * 4) mov %r1, 0x8(%rbp)
+     *********************/
+    Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
+    Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
+    // Register stackPtr = TRI->getStackRegister() ;
+    Register framePtr = TRI->getFramePtr(); 
+
+    // 
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
+        .addReg(0)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x108)
+        .addReg(X86::GS);
+
+    BuildMI(MBB, I, DL, TII->get(X86::ADD64mi32))
+        .addReg(0)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x108)
+        .addReg(X86::GS)
+        .addImm(QWORDSIZE) ;
+
+
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
+        .addReg(R0)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0) 
+        .addReg(0);
+
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
+        .addReg(framePtr)
+        .addImm(1)
+        .addReg(0)
+        .addImm(0x8)
+        .addReg(0)
+        .addReg(R1) ;
+    /*******************
      * 1) mov %rsp, %r0
      * 2) mov %gs:108, %rsp
      * 3) pop %r1
      * 4) mov %r1, 0x8(%rbp)
      * 5) mov %rsp, %gs:108
      * 6) mov %r0, %rsp
-     *********************/
-    Register R0 = MBB.getParent()->getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
-    Register R1 = MBB.getParent()->getRegInfo().createVirtualRegister(&X86::GR64RegClass) ;
-    
+     ********************
     // 1)
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), R0)
-        .addReg(X86::RSP);
     
     // 2)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), X86::RSP)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), stackPtr)
         .addReg(0)
         .addImm(1)
         .addReg(0)
@@ -279,7 +355,7 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
 
     // 4)
     BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(X86::RBP)
+        .addReg(framePtr)
         .addImm(1)
         .addReg(0)
         .addImm(0x8)
@@ -293,9 +369,11 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addReg(0)
         .addImm(0x108)
         .addReg(X86::GS)
-        .addReg(X86::RSP) ;
+        .addReg(stackPtr) ;
+
 
     // 6)
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), X86::RSP)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), stackPtr)
         .addReg(R0) ;
+    }*/
 }
