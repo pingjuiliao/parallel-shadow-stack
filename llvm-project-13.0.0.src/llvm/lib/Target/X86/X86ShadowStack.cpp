@@ -12,7 +12,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/raw_ostream.h"
-#define DEBUG
+// #define DEBUG
 using namespace llvm ;
 
 
@@ -40,7 +40,7 @@ private:
     
     // Machine instruction builder requirements
     const X86Subtarget    *STI = nullptr ;
-    const TargetInstrInfo *TII = nullptr ;
+    const X86InstrInfo *TII = nullptr ;
     // register
     MachineRegisterInfo   *MRI = nullptr ;
     const X86RegisterInfo *TRI = nullptr ;
