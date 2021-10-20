@@ -199,7 +199,7 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
     Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
     Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
     Register framePtr = TRI->getFramePtr() ;
-    
+
 
     BuildMI(MBB, I, DL, TII->get(X86::SUB64mi32))
         .addReg(0)

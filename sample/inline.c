@@ -1,29 +1,33 @@
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <string.h>
 static inline void
-swap(int* x, int* y) {
-    int tmp = *x;
+swap(unsigned int* x, unsigned int* y) {
+    unsigned int tmp = *x;
     *x = *y ;
     *y = tmp ;
 }
-int fibonacci(int n) ;
-void performInlineSwap(void) ;
+
+void performInlineSwap(unsigned int n) ;
 
 int
 main(int argc, char** argv) {
-    performInlineSwap() ;
+    char buf[20];
+    unsigned int x;
+    memset(buf, 0 , sizeof(buf)) ;
+    fgets(buf, 20, stdin);
+    x = (unsigned int) atoi(buf);
+    performInlineSwap(x ) ;
     return 0 ; 
 }
 
-int
-fibonacci(int n) {
-    if ( n <= 1 ) return 1 ;
-    return fibonacci(n-1) + fibonacci(n-2) ;
-}
-
 void 
-performInlineSwap(void) {
-    int x = 1, y = fibonacci(16);
+performInlineSwap(unsigned int n) { 
+    unsigned int x = 1, y = 2;
+
+    for ( unsigned int i = 0; i < n; i++ ) {
+        y += i ;
+    }
     printf("x: %d, y: %d\n",x, y);
     puts("Swap !!");
     swap(&x, &y );

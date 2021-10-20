@@ -493,6 +493,7 @@ bool X86PassConfig::addPreISel() {
 }
 
 void X86PassConfig::addPreRegAlloc() {
+  addPass(createX86ShadowStack());
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(&LiveRangeShrinkID);
     addPass(createX86FixupSetCC());
@@ -504,12 +505,10 @@ void X86PassConfig::addPreRegAlloc() {
   addPass(createX86SpeculativeLoadHardeningPass());
   addPass(createX86FlagsCopyLoweringPass());
   addPass(createX86WinAllocaExpander());
-  // addPass(createX86ShadowStack());
 
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(createX86PreTileConfigPass());
   }
-  addPass(createX86ShadowStack()) ;
 }
 
 void X86PassConfig::addMachineSSAOptimization() {
@@ -566,7 +565,7 @@ void X86PassConfig::addPreEmitPass2() {
   // hand inspection of the codegen output.
   addPass(createX86SpeculativeExecutionSideEffectSuppression());
   addPass(createX86IndirectThunksPass());
-
+  
   // Insert extra int3 instructions after trailing call instructions to avoid
   // issues in the unwinder.
   if (TT.isOSWindows() && TT.getArch() == Triple::x86_64)

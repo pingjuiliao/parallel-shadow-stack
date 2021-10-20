@@ -6,5 +6,7 @@ bufovfl: ./sample/bufovfl.c
 	$(CC) -o bufovfl.exe ./sample/bufovfl.c
 inline: ./sample/inline.c
 	$(CC) -o inline.exe ./sample/inline.c -O1
+fibonacci:  ./sample/fibonacci.c
+	$(CC) -o fibo.exe ./sample/fibonacci.c -O1
 clean:
 	rm *.exe
