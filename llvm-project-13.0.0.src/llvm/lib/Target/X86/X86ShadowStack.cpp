@@ -88,7 +88,9 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
 #ifdef DEBUG    
     errs() << MF.getName() << "() is protected by shadow stack\n" ;
 #endif
+    
     writePrologue(MF) ; 
+
     findAndWriteEpilogue(MF) ;
     
     return true ;
@@ -112,13 +114,15 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
      ***********************/
 
     // 1) %rax = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RAX)
+        .addImm(0x9) ;
     BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
         .addImm(0x0) ;
     BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ESI)
         .addImm(0x1000) ; // alloca a page
     BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::EDX)
         .addImm(0x3) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ECX)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ECX) /* function call: RCX, syscall: R10*/
         .addImm(0x22);
     BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R8D)
         .addImm(0xffffffff) ;
@@ -127,14 +131,14 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
     BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
         .addExternalSymbol("mmap") ;
     
-    // 2) arch_prctl(ARCH_SET_GS, %rax) ;
+    // 2) arch_prctl(ARCH_SET_GS, %rax) ; // syscall(158, ARCH_SET_GS, %rax) ;
     BuildMI(MBB, I, DL, TII->get(X86::MOV64ri32), X86::RDI)
         .addImm(0x1001);
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), X86::RSI)
         .addReg(X86::RAX) ; 
     BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
         .addExternalSymbol("arch_prctl");
-
+    
 
     // 3) %rax = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
     BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
@@ -143,7 +147,7 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
         .addImm(STACKSIZE) ; // alloca a page
     BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::EDX)
         .addImm(0x3) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ECX)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::RCX)
         .addImm(0x22);
     BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R8D)
         .addImm(0xffffffff) ;
@@ -151,7 +155,7 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
         .addImm(0x0) ;
     BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
         .addExternalSymbol("mmap") ;
-
+    
 
     // 4) add %rax, STACKSIZE-8  
     BuildMI(MBB, I, DL, TII->get(X86::ADD64ri32), X86::RAX)
