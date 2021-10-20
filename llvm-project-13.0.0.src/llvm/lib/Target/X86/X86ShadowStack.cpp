@@ -30,7 +30,7 @@ private:
 
     // allocate memory for machine function pass
     void initShadowStack(MachineFunction &MF) ;
-    
+    bool functionMustReturn(MachineFunction &MF) ; 
     // shadow stack prologue
     void writePrologue(MachineFunction &MF) ;
     
@@ -64,6 +64,7 @@ llvm::createX86ShadowStack() {
 }
 
 
+
 bool 
 X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     
@@ -85,6 +86,10 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
         return true ;
     } 
 
+    if ( !functionMustReturn(MF) ) {
+        return false ;  
+    }
+
 #ifdef DEBUG    
     errs() << MF.getName() << "() is protected by shadow stack\n" ;
 #endif
@@ -94,6 +99,20 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     findAndWriteEpilogue(MF) ;
     
     return true ;
+}
+
+
+
+bool
+X86ShadowStack::functionMustReturn(MachineFunction &MF) {
+    bool fnHasReturn = false ;
+    for ( auto &MBB: MF ) {
+        if ( MBB.isReturnBlock() ) {
+            fnHasReturn = true ;
+            break; 
+        }
+    }
+    return fnHasReturn && !MF.exposesReturnsTwice() ;
 }
 
 void 
@@ -185,10 +204,6 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
     MachineBasicBlock::iterator I = MBB.begin() ;
     const DebugLoc &DL = I->getDebugLoc() ;
 
-    if ( !TFL->canUseAsPrologue(MBB) ) { 
-        errs() << "Cannot instrument function " << MF.getName() << "'s prologue'\n"; 
-        return ;
-    }
     // assembly
     /****************************
      * 1) sub $0x8, %gs:108
@@ -196,8 +211,8 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
      * 3) mov %gs:108, %r1 
      * 4) mov %r0, 0x0(%r1)
      ****************************/
-    Register R0 = X86::R13 ;
-    Register R1 = X86::R14 ;
+    Register R0 = X86::R10 ;
+    Register R1 = X86::R11 ;
     Register stackPtr = TRI->getStackRegister() ;
 
 
@@ -254,10 +269,6 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
     MachineBasicBlock::iterator it = I.getIterator() ;
     const DebugLoc &DL = it->getDebugLoc() ;
     
-    if ( !TFL->canUseAsEpilogue(MBB) ) {
-        errs() << "Cannot instrument function " << MBB.getParent()->getName() << "'s epilogue'\n"; 
-        return ;
-    }
 
 
 #ifdef DEBUG
@@ -273,7 +284,7 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
      * 3) mov (%r0), %r1
      * 4) mov %r1, (%%ret_addr)
      *********************/
-    Register R0 = X86::R13 ;
+    Register R0 = X86::R15;
     Register stackPtr = TRI->getStackRegister(); 
 
     // 
