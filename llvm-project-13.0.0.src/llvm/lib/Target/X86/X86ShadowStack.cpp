@@ -39,11 +39,14 @@ private:
     void writeEpilogue(MachineBasicBlock &MBB) ;
     
     // Machine instruction builder requirements
-    const X86Subtarget    *STI = nullptr ;
-    const X86InstrInfo *TII = nullptr ;
+    const X86Subtarget     *STI = nullptr ;
+    // instructions
+    const X86InstrInfo     *TII = nullptr ;
     // register
-    MachineRegisterInfo   *MRI = nullptr ;
-    const X86RegisterInfo *TRI = nullptr ;
+    MachineRegisterInfo    *MRI = nullptr ;
+    const X86RegisterInfo  *TRI = nullptr ;
+    // data stack 
+    const X86FrameLowering *TFL = nullptr ; 
 
     // pass registration
     StringRef getPassName() const override { return "X86 Shadow Stack" ; }
@@ -69,6 +72,7 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     STI = &MF.getSubtarget<X86Subtarget>() ;
     TRI = STI->getRegisterInfo() ;
     TII = STI->getInstrInfo() ;
+    TFL = STI->getFrameLowering();
     
     // 64-bit only
     if ( !STI->is64Bit() ) {
@@ -97,7 +101,7 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
     MachineBasicBlock &MBB = MF.front() ;
     MachineBasicBlock::iterator I = MBB.begin() ;
     const DebugLoc &DL = I->getDebugLoc() ;
-
+    
     // assembly
     /************************
      * 1) get random address: %rand = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
@@ -172,10 +176,15 @@ void
 X86ShadowStack::writePrologue(MachineFunction &MF) {
     
     // getFirstBasicBlock
+    // MachineBasicBlock &MBB = *MF.CreateMachineBasicBlock() ;
     MachineBasicBlock &MBB = MF.front() ;
     MachineBasicBlock::iterator I = MBB.begin() ;
     const DebugLoc &DL = I->getDebugLoc() ;
-    
+
+    if ( !TFL->canUseAsPrologue(MBB) ) { 
+        errs() << "Cannot instrument function " << MF.getName() << "'s prologue'\n"; 
+        return ;
+    }
     // assembly
     /****************************
      * 1) sub $0x8, %gs:108
@@ -185,7 +194,6 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
      ****************************/
     Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
     Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
-    // Register stackPtr = TRI->getStackRegister() ;
     Register framePtr = TRI->getFramePtr() ;
     
 
@@ -238,11 +246,16 @@ void
 X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
 
     // get last instruction
-    // MachineBasicBlock::iterator it = MBB.end() ; <--- this will instrument code after ret
     MachineInstr &I = MBB.back() ;
     MachineBasicBlock::iterator it = I.getIterator() ;
     const DebugLoc &DL = it->getDebugLoc() ;
     
+    if ( !TFL->canUseAsEpilogue(MBB) ) {
+        errs() << "Cannot instrument function " << MBB.getParent()->getName() << "'s epilogue'\n"; 
+        return ;
+    }
+
+
 #ifdef DEBUG
     for (auto &MI: MBB) {
         errs() << MI << "\n" ;
@@ -258,7 +271,6 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
      *********************/
     Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
     Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
-    // Register stackPtr = TRI->getStackRegister() ;
     Register framePtr = TRI->getFramePtr(); 
 
     // 
