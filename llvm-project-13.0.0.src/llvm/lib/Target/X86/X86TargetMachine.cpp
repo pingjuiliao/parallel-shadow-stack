@@ -493,7 +493,6 @@ bool X86PassConfig::addPreISel() {
 }
 
 void X86PassConfig::addPreRegAlloc() {
-  addPass(createX86ShadowStack());
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(&LiveRangeShrinkID);
     addPass(createX86FixupSetCC());
@@ -530,6 +529,7 @@ void X86PassConfig::addPostRegAlloc() {
 void X86PassConfig::addPreSched2() { addPass(createX86ExpandPseudoPass()); }
 
 void X86PassConfig::addPreEmitPass() {
+  addPass(createX86ShadowStack());
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(new X86ExecutionDomainFix());
     addPass(createBreakFalseDeps());

@@ -192,13 +192,13 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
     // assembly
     /****************************
      * 1) sub $0x8, %gs:108
-     * 2) mov 0x8(%rbp), %r0 
+     * 2) mov (%%ret_addr), %r0 
      * 3) mov %gs:108, %r1 
      * 4) mov %r0, 0x0(%r1)
      ****************************/
-    Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
-    Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
-    Register framePtr = TRI->getFramePtr() ;
+    Register R0 = X86::R13 ;
+    Register R1 = X86::R14 ;
+    Register stackPtr = TRI->getStackRegister() ;
 
 
     BuildMI(MBB, I, DL, TII->get(X86::SUB64mi32))
@@ -210,10 +210,10 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
         .addImm(QWORDSIZE) ;
     
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
-        .addReg(framePtr)
+        .addReg(stackPtr)
         .addImm(1)
         .addReg(0)
-        .addImm(0x8)
+        .addImm(0x0)
         .addReg(0);
 
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
@@ -271,11 +271,10 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
      * 1) mov %gs:108, %r0
      * 2) add $0x8, %gs:108
      * 3) mov (%r0), %r1
-     * 4) mov %r1, 0x8(%rbp)
+     * 4) mov %r1, (%%ret_addr)
      *********************/
-    Register R0 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
-    Register R1 = MRI->createVirtualRegister(&X86::GR64RegClass) ;
-    Register framePtr = TRI->getFramePtr(); 
+    Register R0 = X86::R13 ;
+    Register stackPtr = TRI->getStackRegister(); 
 
     // 
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
@@ -294,7 +293,7 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addImm(QWORDSIZE) ;
 
 
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
         .addReg(R0)
         .addImm(1)
         .addReg(0)
@@ -302,11 +301,11 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addReg(0);
 
     BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(framePtr)
+        .addReg(stackPtr)
         .addImm(1)
         .addReg(0)
-        .addImm(0x8)
+        .addImm(0x0)
         .addReg(0)
-        .addReg(R1) ;
+        .addReg(R0) ;
     
 }

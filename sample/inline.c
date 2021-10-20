@@ -16,8 +16,9 @@ main(int argc, char** argv) {
     unsigned int x;
     memset(buf, 0 , sizeof(buf)) ;
     fgets(buf, 20, stdin);
+    buf[4] = '\0' ;
     x = (unsigned int) atoi(buf);
-    performInlineSwap(x ) ;
+    performInlineSwap(x) ;
     return 0 ; 
 }
 

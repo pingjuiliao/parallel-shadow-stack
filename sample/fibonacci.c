@@ -8,8 +8,8 @@ fibo(uint64_t n) {
 
 int
 main(int argc, char** argv) {
-    uint64_t r ;
+    uint64_t r = 0;
     r = fibo(30);
-    printf("%lu\n", r) ;
+    printf("fibonacci(30) == %lu\n", r) ;
     return 0 ;
 }
