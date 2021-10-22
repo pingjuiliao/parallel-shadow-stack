@@ -4,6 +4,7 @@
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -27,10 +28,18 @@ private:
 
     const size_t STACKSIZE = 0x10000 ;
     const size_t QWORDSIZE = 0x8 ;
+    Register prologueReg0; // need two for prologue
+    Register prologueReg1;
+    Register epilogueReg;  // need one for epilogue
+    bool functionMustReturn ;
+    bool epilogueRegConflict;
 
     // allocate memory for machine function pass
     void initShadowStack(MachineFunction &MF) ;
-    bool functionMustReturn(MachineFunction &MF) ; 
+    
+    // checks before instrumentation
+    void functionPropertyCheck(MachineFunction &MF) ; 
+
     // shadow stack prologue
     void writePrologue(MachineFunction &MF) ;
     
@@ -74,7 +83,11 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     TRI = STI->getRegisterInfo() ;
     TII = STI->getInstrInfo() ;
     TFL = STI->getFrameLowering();
-    
+    prologueReg0 = X86::R10 ;
+    prologueReg1 = X86::R11 ;
+    epilogueReg  = X86::R15 ;
+    functionMustReturn = false ;
+    epilogueRegConflict= false ;
     // 64-bit only
     if ( !STI->is64Bit() ) {
         return false ;
@@ -86,13 +99,14 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
         return true ;
     } 
 
-    if ( !functionMustReturn(MF) ) {
+    functionPropertyCheck(MF) ;
+    
+
+    // don't instrument this function
+    if ( !functionMustReturn ) {
         return false ;  
     }
 
-#ifdef DEBUG    
-    errs() << MF.getName() << "() is protected by shadow stack\n" ;
-#endif
     
     writePrologue(MF) ; 
 
@@ -103,16 +117,29 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
 
 
 
-bool
-X86ShadowStack::functionMustReturn(MachineFunction &MF) {
+void
+X86ShadowStack::functionPropertyCheck(MachineFunction &MF) {
+    epilogueRegConflict= false;
+    functionMustReturn = false;
+
     bool fnHasReturn = false ;
     for ( auto &MBB: MF ) {
-        if ( MBB.isReturnBlock() ) {
-            fnHasReturn = true ;
-            break; 
+        if ( !MBB.isReturnBlock() ) {
+            continue ;
         }
+
+        // handle return block
+        fnHasReturn = true ;
+        for ( auto &MI: MBB ) {
+            for ( unsigned i = 0 ; i < MI.getNumOperands(); ++i  ) {
+                if ( MI.getOperand(i).isReg() && MI.getOperand(i).getReg() == epilogueReg ) 
+                    epilogueRegConflict= true ; 
+            }
+        } 
+
+
     }
-    return fnHasReturn && !MF.exposesReturnsTwice() ;
+    functionMustReturn = fnHasReturn && !MF.exposesReturnsTwice() ;
 }
 
 void 
@@ -211,8 +238,6 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
      * 3) mov %gs:108, %r1 
      * 4) mov %r0, 0x0(%r1)
      ****************************/
-    Register R0 = X86::R10 ;
-    Register R1 = X86::R11 ;
     Register stackPtr = TRI->getStackRegister() ;
 
 
@@ -224,14 +249,14 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
         .addReg(X86::GS)
         .addImm(QWORDSIZE) ;
     
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), prologueReg0)
         .addReg(stackPtr)
         .addImm(1)
         .addReg(0)
         .addImm(0x0)
         .addReg(0);
 
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R1)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), prologueReg1)
         .addReg(0)
         .addImm(1)
         .addReg(0)
@@ -239,12 +264,12 @@ X86ShadowStack::writePrologue(MachineFunction &MF) {
         .addReg(X86::GS);
 
     BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(R1)
+        .addReg(prologueReg1)
         .addImm(1)
         .addReg(0)
         .addImm(0x0)
         .addReg(0)
-        .addReg(R0) ;
+        .addReg(prologueReg0) ;
 
      
 }
@@ -269,14 +294,6 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
     MachineBasicBlock::iterator it = I.getIterator() ;
     const DebugLoc &DL = it->getDebugLoc() ;
     
-
-
-#ifdef DEBUG
-    for (auto &MI: MBB) {
-        errs() << MI << "\n" ;
-    }
-#endif
-
     // assembly
     /******************
      * 1) mov %gs:108, %r0
@@ -284,11 +301,14 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
      * 3) mov (%r0), %r1
      * 4) mov %r1, (%%ret_addr)
      *********************/
-    Register R0 = X86::R15;
     Register stackPtr = TRI->getStackRegister(); 
+    
+    if ( epilogueRegConflict ) {
+        BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), epilogueReg); 
+    }
 
-    // 
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
+
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), epilogueReg)
         .addReg(0)
         .addImm(1)
         .addReg(0)
@@ -304,8 +324,8 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addImm(QWORDSIZE) ;
 
 
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), R0)
-        .addReg(R0)
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), epilogueReg)
+        .addReg(epilogueReg)
         .addImm(1)
         .addReg(0)
         .addImm(0) 
@@ -317,6 +337,11 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addReg(0)
         .addImm(0x0)
         .addReg(0)
-        .addReg(R0) ;
-    
+        .addReg(epilogueReg) ;
+ 
+   
+    if ( epilogueRegConflict ) {
+        BuildMI(MBB, I, DL, TII->get(X86::POP64r), epilogueReg); 
+    }
+
 }
