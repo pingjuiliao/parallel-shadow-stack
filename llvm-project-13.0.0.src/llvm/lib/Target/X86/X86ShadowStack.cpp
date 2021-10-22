@@ -26,7 +26,7 @@ public:
 private:   
 
 
-    const size_t STACKSIZE = 0x10000 ;
+    const size_t STACKSIZE = 0x10000 ; 
     const size_t QWORDSIZE = 0x8 ;
     Register prologueReg0; // need two for prologue
     Register prologueReg1;
@@ -124,18 +124,24 @@ X86ShadowStack::functionPropertyCheck(MachineFunction &MF) {
 
     bool fnHasReturn = false ;
     for ( auto &MBB: MF ) {
+        for ( auto &MI: MBB ) {
+            for ( unsigned i = 0 ; i < MI.getNumOperands(); ++i  ) {
+                if ( MI.getOperand(i).isReg() && MI.getOperand(i).getReg() == epilogueReg ) {
+                    epilogueRegConflict= true ; 
+                    break ;
+                } 
+            }
+        } 
+
+
+
         if ( !MBB.isReturnBlock() ) {
             continue ;
         }
 
         // handle return block
         fnHasReturn = true ;
-        for ( auto &MI: MBB ) {
-            for ( unsigned i = 0 ; i < MI.getNumOperands(); ++i  ) {
-                if ( MI.getOperand(i).isReg() && MI.getOperand(i).getReg() == epilogueReg ) 
-                    epilogueRegConflict= true ; 
-            }
-        } 
+        
 
 
     }
@@ -158,6 +164,8 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
      * 4) get stack top     : %stack_top  = %stack_base + STACKSIZE - 8 ;
      * 5) set %gs:108       : mov %stack_top, %gs:108 ;
      ***********************/
+    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), X86::RDI) ;
+    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), X86::RSI) ;
 
     // 1) %rax = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
     BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RAX)
@@ -220,6 +228,10 @@ X86ShadowStack::initShadowStack(MachineFunction &MF) {
     BuildMI(MBB, I, DL, TII->get(X86::XOR64rr), X86::RAX)
         .addReg(X86::RAX)
         .addReg(X86::RAX);
+    
+    BuildMI(MBB, I, DL, TII->get(X86::POP64r), X86::RSI) ;
+    BuildMI(MBB, I, DL, TII->get(X86::POP64r), X86::RDI) ;
+
 }
 
 void 
@@ -330,12 +342,13 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addReg(0)
         .addImm(0) 
         .addReg(0);
+    
 
     BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
         .addReg(stackPtr)
         .addImm(1)
         .addReg(0)
-        .addImm(0x0)
+        .addImm(epilogueRegConflict? 0x8: 0x0)
         .addReg(0)
         .addReg(epilogueReg) ;
  
