@@ -121,6 +121,7 @@ void
 X86ShadowStack::functionPropertyCheck(MachineFunction &MF) {
     epilogueRegConflict= false;
     functionMustReturn = false;
+    
 
     bool fnHasReturn = false ;
     for ( auto &MBB: MF ) {
@@ -140,7 +141,10 @@ X86ShadowStack::functionPropertyCheck(MachineFunction &MF) {
         }
 
         // handle return block
-        fnHasReturn = true ;
+        
+        MachineInstr &lastInstr = MBB.back() ;
+        if ( lastInstr.getOpcode() == X86::RETQ )  
+            fnHasReturn = true ;
         
 
 
@@ -306,6 +310,7 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
     MachineBasicBlock::iterator it = I.getIterator() ;
     const DebugLoc &DL = it->getDebugLoc() ;
     
+    epilogueRegConflict = true ;
     // assembly
     /******************
      * 1) mov %gs:108, %r0
