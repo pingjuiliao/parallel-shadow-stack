@@ -32,7 +32,7 @@ private:
     Register prologueReg1;
     Register epilogueReg;  // need one for epilogue
     bool functionMustReturn ;
-    bool epilogueRegConflict;
+    // bool epilogueRegConflict; // don't use this: see NOTE: reg conflict 
 
     // allocate memory for machine function pass
     void initShadowStack(MachineFunction &MF) ;
@@ -83,17 +83,25 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
     TRI = STI->getRegisterInfo() ;
     TII = STI->getInstrInfo() ;
     TFL = STI->getFrameLowering();
+    
+    // registers
+    /***NOTE: reg conflicts**************************
+     * it matters the choice of registers
+     * R15:  can be updated outside the procedure and therefore the use of register conflicts
+     * (e.g. binutils_2.37/bfd/doc/chew.c)
+     *********************************/
     prologueReg0 = X86::R10 ;
     prologueReg1 = X86::R11 ;
-    epilogueReg  = X86::R15 ;
+    epilogueReg  = X86::R10 ;
+    
     functionMustReturn = false ;
-    epilogueRegConflict= false ;
+
     // 64-bit only
     if ( !STI->is64Bit() ) {
         return false ;
     }
          
-
+    // do something new in main
     if ( MF.getName() == "main" ) {
         initShadowStack(MF) ;
         return true ;
@@ -119,34 +127,27 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
 
 void
 X86ShadowStack::functionPropertyCheck(MachineFunction &MF) {
-    epilogueRegConflict= false;
+    // default property 
     functionMustReturn = false;
     
 
     bool fnHasReturn = false ;
     for ( auto &MBB: MF ) {
-        for ( auto &MI: MBB ) {
-            for ( unsigned i = 0 ; i < MI.getNumOperands(); ++i  ) {
-                if ( MI.getOperand(i).isReg() && MI.getOperand(i).getReg() == epilogueReg ) {
-                    epilogueRegConflict= true ; 
-                    break ;
-                } 
-            }
-        } 
-
-
 
         if ( !MBB.isReturnBlock() ) {
             continue ;
         }
 
         // handle return block
-        
+        /*** NOTE*************************************************************************
+         * Don't (just) use MachineBasicBlock.isReturnBlock() and MachineInstr.isReturn()
+         * it checks whether the MCInstrDesc contains the return flags and sometimes
+         *                 "jmp 0xXXXXX" (at the function end) IS CONSIDERED AS A RETURN!!
+         * It seems like that it indicates whether it is ReturnInst at IR level
+         * ****************************************************************************/
         MachineInstr &lastInstr = MBB.back() ;
         if ( lastInstr.getOpcode() == X86::RETQ )  
             fnHasReturn = true ;
-        
-
 
     }
     functionMustReturn = fnHasReturn && !MF.exposesReturnsTwice() ;
@@ -310,7 +311,6 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
     MachineBasicBlock::iterator it = I.getIterator() ;
     const DebugLoc &DL = it->getDebugLoc() ;
     
-    epilogueRegConflict = true ;
     // assembly
     /******************
      * 1) mov %gs:108, %r0
@@ -320,9 +320,7 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
      *********************/
     Register stackPtr = TRI->getStackRegister(); 
     
-    if ( epilogueRegConflict ) {
-        BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), epilogueReg); 
-    }
+    // BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), epilogueReg); 
 
 
     BuildMI(MBB, I, DL, TII->get(X86::MOV64rm), epilogueReg)
@@ -353,13 +351,10 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
         .addReg(stackPtr)
         .addImm(1)
         .addReg(0)
-        .addImm(epilogueRegConflict? 0x8: 0x0)
+        .addImm(0x0)
         .addReg(0)
         .addReg(epilogueReg) ;
  
-   
-    if ( epilogueRegConflict ) {
-        BuildMI(MBB, I, DL, TII->get(X86::POP64r), epilogueReg); 
-    }
+    // BuildMI(MBB, I, DL, TII->get(X86::POP64r), epilogueReg); 
 
 }
