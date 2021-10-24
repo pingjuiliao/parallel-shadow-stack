@@ -1,6 +1,7 @@
 **/build
 **/a.out
 **/tmp
+./lib/*.so
 *.o
 *.exe
 
