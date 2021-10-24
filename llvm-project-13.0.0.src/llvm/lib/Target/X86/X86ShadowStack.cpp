@@ -35,7 +35,7 @@ private:
     // bool epilogueRegConflict; // don't use this: see NOTE: reg conflict 
 
     // allocate memory for machine function pass
-    void initShadowStack(MachineFunction &MF) ;
+    // void initShadowStack(MachineFunction &MF) ; // DEPRECIATED
     
     // checks before instrumentation
     void functionPropertyCheck(MachineFunction &MF) ; 
@@ -103,7 +103,7 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
          
     // do something new in main
     if ( MF.getName() == "main" ) {
-        initShadowStack(MF) ;
+        // initShadowStack(MF) ;
         return true ;
     } 
 
@@ -151,92 +151,6 @@ X86ShadowStack::functionPropertyCheck(MachineFunction &MF) {
 
     }
     functionMustReturn = fnHasReturn && !MF.exposesReturnsTwice() ;
-}
-
-void 
-X86ShadowStack::initShadowStack(MachineFunction &MF) {
-
-    // getFirstBasicBlock
-    MachineBasicBlock &MBB = MF.front() ;
-    MachineBasicBlock::iterator I = MBB.begin() ;
-    const DebugLoc &DL = I->getDebugLoc() ;
-    
-    // assembly
-    /************************
-     * 1) get random address: %rand = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
-     * 2) set it as %gs     : arch_prctl(SET_GS_BASE, %rand)            ;
-     * 3) allocate stack    : %stack_base = mmap(NULL, STACKSIZE, ...)  ; 
-     * 4) get stack top     : %stack_top  = %stack_base + STACKSIZE - 8 ;
-     * 5) set %gs:108       : mov %stack_top, %gs:108 ;
-     ***********************/
-    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), X86::RDI) ;
-    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), X86::RSI) ;
-
-    // 1) %rax = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RAX)
-        .addImm(0x9) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
-        .addImm(0x0) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ESI)
-        .addImm(0x1000) ; // alloca a page
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::EDX)
-        .addImm(0x3) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ECX) /* function call: RCX, syscall: R10*/
-        .addImm(0x22);
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R8D)
-        .addImm(0xffffffff) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R9D)
-        .addImm(0x0) ;
-    BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
-        .addExternalSymbol("mmap") ;
-    
-    // 2) arch_prctl(ARCH_SET_GS, %rax) ; // syscall(158, ARCH_SET_GS, %rax) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri32), X86::RDI)
-        .addImm(0x1001);
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), X86::RSI)
-        .addReg(X86::RAX) ; 
-    BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
-        .addExternalSymbol("arch_prctl");
-    
-
-    // 3) %rax = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
-        .addImm(0x0) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ESI)
-        .addImm(STACKSIZE) ; // alloca a page
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::EDX)
-        .addImm(0x3) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::RCX)
-        .addImm(0x22);
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R8D)
-        .addImm(0xffffffff) ;
-    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R9D)
-        .addImm(0x0) ;
-    BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
-        .addExternalSymbol("mmap") ;
-    
-
-    // 4) add %rax, STACKSIZE-8  
-    BuildMI(MBB, I, DL, TII->get(X86::ADD64ri32), X86::RAX)
-        .addImm(STACKSIZE-QWORDSIZE);
-    
-    // 5) mov %rax, %gs:108
-    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
-        .addReg(0x0)        // Mem: base  register
-        .addImm(0x1)        //      scale immediate
-        .addReg(0x0)        //      index register 
-        .addImm(0x108)      //      disp  immediate      
-        .addReg(X86::GS)    //      Segment
-        .addReg(X86::RAX);  // Reg
-    
-    // clean up
-    BuildMI(MBB, I, DL, TII->get(X86::XOR64rr), X86::RAX)
-        .addReg(X86::RAX)
-        .addReg(X86::RAX);
-    
-    BuildMI(MBB, I, DL, TII->get(X86::POP64r), X86::RSI) ;
-    BuildMI(MBB, I, DL, TII->get(X86::POP64r), X86::RDI) ;
-
 }
 
 void 
@@ -358,3 +272,93 @@ X86ShadowStack::writeEpilogue(MachineBasicBlock &MBB) {
     // BuildMI(MBB, I, DL, TII->get(X86::POP64r), epilogueReg); 
 
 }
+
+
+
+
+/* DEPRECIATED shadow stack initialization
+void 
+X86ShadowStack::initShadowStack(MachineFunction &MF) {
+
+    // getFirstBasicBlock
+    MachineBasicBlock &MBB = MF.front() ;
+    MachineBasicBlock::iterator I = MBB.begin() ;
+    const DebugLoc &DL = I->getDebugLoc() ;
+    
+    // assembly
+    // 1) get random address: %rand = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
+    // 2) set it as %gs     : arch_prctl(SET_GS_BASE, %rand)            ;
+    // 3) allocate stack    : %stack_base = mmap(NULL, STACKSIZE, ...)  ; 
+    // 4) get stack top     : %stack_top  = %stack_base + STACKSIZE - 8 ;
+    // 5) set %gs:108       : mov %stack_top, %gs:108 ;
+    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), X86::RDI) ;
+    BuildMI(MBB, I, DL, TII->get(X86::PUSH64r), X86::RSI) ;
+
+    // 1) %rax = mmap(NULL, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RAX)
+        .addImm(0x9) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
+        .addImm(0x0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ESI)
+        .addImm(0x1000) ; // alloca a page
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::EDX)
+        .addImm(0x3) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ECX) // function call: RCX, syscall: R10
+        .addImm(0x22);
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R8D)
+        .addImm(0xffffffff) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R9D)
+        .addImm(0x0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
+        .addExternalSymbol("mmap") ;
+    
+    // 2) arch_prctl(ARCH_SET_GS, %rax) ; // syscall(158, ARCH_SET_GS, %rax) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri32), X86::RDI)
+        .addImm(0x1001);
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64rr), X86::RSI)
+        .addReg(X86::RAX) ; 
+    BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
+        .addExternalSymbol("arch_prctl");
+    
+
+    // 3) %rax = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64ri), X86::RDI)
+        .addImm(0x0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::ESI)
+        .addImm(STACKSIZE) ; // alloca a page
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::EDX)
+        .addImm(0x3) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::RCX)
+        .addImm(0x22);
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R8D)
+        .addImm(0xffffffff) ;
+    BuildMI(MBB, I, DL, TII->get(X86::MOV32ri), X86::R9D)
+        .addImm(0x0) ;
+    BuildMI(MBB, I, DL, TII->get(X86::CALL64pcrel32))
+        .addExternalSymbol("mmap") ;
+    
+
+    // 4) add %rax, STACKSIZE-8  
+    BuildMI(MBB, I, DL, TII->get(X86::ADD64ri32), X86::RAX)
+        .addImm(STACKSIZE-QWORDSIZE);
+    
+    // 5) mov %rax, %gs:108
+    BuildMI(MBB, I, DL, TII->get(X86::MOV64mr))
+        .addReg(0x0)        // Mem: base  register
+        .addImm(0x1)        //      scale immediate
+        .addReg(0x0)        //      index register 
+        .addImm(0x108)      //      disp  immediate      
+        .addReg(X86::GS)    //      Segment
+        .addReg(X86::RAX);  // Reg
+    
+    // clean up
+    BuildMI(MBB, I, DL, TII->get(X86::XOR64rr), X86::RAX)
+        .addReg(X86::RAX)
+        .addReg(X86::RAX);
+    
+    BuildMI(MBB, I, DL, TII->get(X86::POP64r), X86::RSI) ;
+    BuildMI(MBB, I, DL, TII->get(X86::POP64r), X86::RDI) ;
+
+}*/
+
+
