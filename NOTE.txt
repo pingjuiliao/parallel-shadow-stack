@@ -1,6 +1,8 @@
 
-1. PUSH/POP style V.S. MOV64 style
+1. There is a inter-procedural push/pop matching pass and it tries to match the number of push/pop for each basic block
+#pushs == #pops
 
+PUSH/POP style V.S. MOV64 style
 PUSH/POP style does not work properly because llvm tries to, maybe via a pass, match the number of push/pop in each code site (maybe machine basic block?). For example, in the following prologue/epilogue:
 
 // Prologue                   // Epilogue
@@ -24,15 +26,16 @@ We will get:
  * 5) mov %rsp, %gs:108        * 5) mov %rsp, %gs:108
  * 6) mov %r0, %rsp            * 6) mov %r0, %rsp
  *****************************/****************************
-
+It can be solved by adding pass after the push/pop matching pass/functionality
+but I haven't found it pass
 Though we can make a proper push/pop ourselves, but it uses more instructions so I switch to the MOV64 style.
 
 2. reading/writing return address  0x8(%rbp) before pop  V.S. 0x0(%rsp) before ret
-it seems like that the frame pointer is setup after my shadow stack pass is added in the last step of
-X86TargetMachine::addPreRegAlloc() so 0x0(%rsp) does not work because there are more instructions added
+it seems like that the frame pointer is setup after my shadow stack pass if it is added in the last step of
+X86TargetMachine::addPreRegAlloc(). In this case, 0x0(%rsp) does not work because there are more instructions added
 between ret and my instrumented assembly.
 
-My intended epilogue
+if using 0x0(%rsp) in  X86TargetMachine::addPreRegAlloc()
 *******************
 * mov %ret_addr_shadow, 0x0(%rsp)
 * ret
@@ -46,33 +49,57 @@ becomes
 * ret
 ***********************************
 
-Example output: Traverse of machine instructions in the return machine basic block
-```
-ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead "flags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
+Conclucsion:
 
-ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead "flags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
-
-$rdi = COPY %0:gr64
-
-"si = COPY %4:gr32
-
-"dx = COPY %3:gr32
-
-$al = COPY %2:gr8
-
-CALL64pcrel32 @printf, <regmask $bh $bl $bp $bph $bpl $bx "bp "bx $hbp $hbx $rbp $rbx $r12 $r13 $r14 $r15 $r12b $r13b $r14b $r15b $r12bh $r13bh $r14bh $r15bh $r12d $r13d $r14d $r15d $r12w $r13w $r14w $r15w $r12wh and 3 more...>, implicit $rsp, implicit $ssp, implicit $rdi, implicit "si, implicit "dx, implicit $al, implicit-def $rsp, implicit-def $ssp, implicit-def "ax
-
-ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead "flags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
-
-RET 0
-""""""""""
-```
+addPreRegAlloc()  - 0x8(%rbp)
+addPostRegAlloc() - 0x8(%rbp)
+---------------------------------------  #not sure where's the line :TODO
+addPreEmitPass()  - 0x0(%rsp)
+addPostEmitPass() - 0x0(%rsp)
 
 
+UPDATE:
+0x0(%rsp) seems to hold stronger assertion about what is true
+
+3. Inline assemblies are not considered as a machine function, so runOnMachineFunction() automatically remove the cases
 
 
-I think it's because the X86FrameLowering happens after addRegAlloc
-Maybe I can use X86FrameLowering::emitEpilogue to avoid such problem
+4. where to put `addPass(MyPass);` ( in lib/Target/X86/X86TargetMachine.cpp )
+there are a number of places where we can put that (refer to llvm/lib/CodeGen/TargetPassConfig.cpp to understand more)
+-addPreRegAlloc()
+-addPostRegAlloc()
+-addPreSched2()
+-addPreEmitPass()
+-addPreEmitPass2()
+-addPreRewrite() ... and so on
 
-3. Not to instrument inline functions
-no need to anything else
+I used addPreEmitPass2() as it seems a good location (emprically) to locate function prologue/epilogue..
+Note that after addPreRegAlloc() we can only use real registers instead of virtual registers.
+So, we have to handle register conflicts
+
+
+5. register conflicts
+we need at least two registers in the function prologue, and one registers in the function epilogue
+so total: 2 registers;
+RAX: X - register for return
+RDI: X - used for the 1st function argument / caller-saved register
+RSI: X - used for the 2nd function argument / caller-saved register
+RDX: X - used for the 3rd function argument / caller-saved register / register for return
+RCX: X - used for the 4th function argument / caller-saved register
+R8 : X - used for the 5th function argument / caller-saved register
+R9 : X - used for the 6th function argument / caller-saved register
+R10: O - works for binutils/ SPEC2006 bzip2 / it's also 3rd syscall argument
+R11: O - works for binutils/ SPEC2006 bzip2
+R12: X - callee-saved register
+R13: X - callee-saved register
+R14: X - callee-saved register
+R15: X - callee-saved register interprocedural conflict detected ( cannot correctly compile binutils-2.37/bfd/doc/chew.c )
+RBX: X - callee-saved register
+RBP: X - callee-saved register
+
+Another way would be using virtual registers, but then we have to code it in addPreRegAlloc() and
+other pass instrumented more code between our epilogue and the return address
+( thus, 0x0(%rsp) cannot be used )
+
+
+
