@@ -1,14 +1,18 @@
 CC=llvm-project-13.0.0.src/build/bin/clang
 CXX=llvm-project-13.0.0.src/build/bin/clang++
-.PHONY: all lib clean
-all: bufovfl inline fibo lib
-bufovfl: ./sample/bufovfl.c
-	$(CC) -o bufovfl.exe ./sample/bufovfl.c
+
+LOADLIB=-L./lib -lShadowStack -Wl,-rpath,./lib 
+.PHONY: all lib bufovfl
+all: bufovfl inline fibo test
+test: ./sample/test.c
+	$(CC) -o test.exe ./sample/test.c -O0
+bufovfl: ./sample/bufovfl.c lib
+	$(CC) -o bufovfl.exe ./sample/bufovfl.c ${LOADLIB}
 inline: ./sample/inline.c
-	$(CC) -o inline.exe ./sample/inline.c -O1
+	$(CC) -o inline.exe ./sample/inline.c -O1 ${LOADLIB}
 fibo:  ./sample/fibonacci.c  
-	$(CC) -o fibo.exe ./sample/fibonacci.c -O1
+	$(CC) -o fibo.exe ./sample/fibonacci.c -O1 ${LOADLIB}
 lib: ./lib/init.c
-	clang -shared -o ./lib/init.so ./lib/init.c
+	clang -shared -o ./lib/libShadowStack.so ./lib/init.c
 clean:
 	rm *.exe ./lib/init.so
