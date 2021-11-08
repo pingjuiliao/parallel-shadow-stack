@@ -8,11 +8,13 @@ test: ./sample/test.c
 	$(CC) -o test.exe ./sample/test.c -O0
 bufovfl: ./sample/bufovfl.c lib
 	$(CC) -o bufovfl.exe ./sample/bufovfl.c ${LOADLIB}
-inline: ./sample/inline.c
+inline: ./sample/inline.c lib
 	$(CC) -o inline.exe ./sample/inline.c -O1 ${LOADLIB}
-fibo:  ./sample/fibonacci.c  
+fibo:  ./sample/fibonacci.c lib
 	$(CC) -o fibo.exe ./sample/fibonacci.c -O1 ${LOADLIB}
+cppbufovfl: ./sample/cppBufovfl.cpp lib 
+	$(CXX) -o cppBufovfl.exe ./sample/cppBufovfl.cpp ${LOADLIB}
 lib: ./lib/init.c
 	clang -shared -o ./lib/libShadowStack.so ./lib/init.c
 clean:
-	rm *.exe ./lib/init.so
+	rm *.exe ./lib/libShadowStack.so
