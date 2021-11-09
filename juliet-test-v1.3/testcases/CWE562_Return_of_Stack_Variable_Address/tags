@@ -1,0 +1,64 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BADS	Makefile	/^BADS=$(subst _good1.,_bad.,$(GOOD1S))$/;"	m
+CC	Makefile	/^CC=\/home\/pingjui\/parallel-shadow-stack\/llvm-project-13.0.0.src\/build\/bin\/clang$/;"	m
+CFLAGS	Makefile	/^CFLAGS=-c $/;"	m
+CPP	Makefile	/^CPP=\/usr\/bin\/clang++$/;"	m
+CPP_OBJECTS	Makefile	/^CPP_OBJECTS=$(CPP_SOURCES:.cpp=.o)$/;"	m
+CPP_SOURCES	Makefile	/^CPP_SOURCES=$(filter-out $(FILTER_OUT),$(wildcard CWE*.cpp))$/;"	m
+CWE562_Return_of_Stack_Variable_Address__return_buf_01_bad	CWE562_Return_of_Stack_Variable_Address__return_buf_01.c	/^void CWE562_Return_of_Stack_Variable_Address__return_buf_01_bad() $/;"	f
+CWE562_Return_of_Stack_Variable_Address__return_buf_01_good	CWE562_Return_of_Stack_Variable_Address__return_buf_01.c	/^void CWE562_Return_of_Stack_Variable_Address__return_buf_01_good() $/;"	f
+CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^namespace CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01 $/;"	n	file:
+CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01	testcases.h	/^	namespace CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01 { void bad();}$/;"	n
+CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01	testcases.h	/^	namespace CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01 { void good();}$/;"	n
+CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01_bad	CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01.c	/^void CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01_bad() $/;"	f
+CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01_good	CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01.c	/^void CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01_good() $/;"	f
+C_OBJECTS	Makefile	/^C_OBJECTS=$(C_SOURCES:.c=.o)$/;"	m
+C_SOURCES	Makefile	/^C_SOURCES=$(filter-out $(FILTER_OUT),$(wildcard CWE*.c))$/;"	m
+C_SUPPORT_FILES	Makefile	/^C_SUPPORT_FILES=$(C_SUPPORT_PATH)io.c $(C_SUPPORT_PATH)std_thread.c$/;"	m
+C_SUPPORT_OBJECTS	Makefile	/^C_SUPPORT_OBJECTS=io.o std_thread.o$/;"	m
+C_SUPPORT_PATH	Makefile	/^C_SUPPORT_PATH=..\/..\/testcasesupport\/$/;"	m
+DEBUG	Makefile	/^DEBUG=-g$/;"	m
+FILTER_OUT	Makefile	/^FILTER_OUT=$(wildcard CWE*w32*.c*) $(wildcard CWE*wchar_t*.c*)$/;"	m
+GOOD1S	Makefile	/^GOOD1S=$(filter-out $(FILTER_OUT), $(wildcard CWE*_good1.cpp))$/;"	m
+HelperClass	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^        HelperClass() $/;"	f	class:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01::HelperClass
+HelperClass	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^class HelperClass $/;"	c	namespace:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01	file:
+INCLUDES	Makefile	/^INCLUDES=-I ..\/..\/testcasesupport$/;"	m
+INCLUDE_MAIN	Makefile	/^INCLUDE_MAIN=-DINCLUDEMAIN$/;"	m
+INDIVIDUALS_C	Makefile	/^INDIVIDUALS_C=$(addsuffix .out, $(sort $(subst .c,,$(SIMPLES_C) $(LETTEREDS_C))))$/;"	m
+INDIVIDUALS_CPP	Makefile	/^INDIVIDUALS_CPP=$(addsuffix .out, $(sort $(subst .cpp,,$(SIMPLES_CPP) $(LETTEREDS_CPP) $(BADS) $(GOOD1S))))$/;"	m
+LD	Makefile	/^LD=ld$/;"	m
+LETTEREDS	Makefile	/^LETTEREDS=$(filter-out $(FILTER_OUT), $(wildcard CWE*a.c*))$/;"	m
+LETTEREDS_C	Makefile	/^LETTEREDS_C=$(subst a.,.,$(filter-out $(CPP_SOURCES), $(LETTEREDS)))$/;"	m
+LETTEREDS_CPP	Makefile	/^LETTEREDS_CPP=$(subst a.,.,$(filter-out $(C_SOURCES), $(LETTEREDS)))$/;"	m
+LFLAGS	Makefile	/^LFLAGS=-lpthread -lm -L\/home\/pingjui\/parallel-shadow-stack\/lib -lShadowStack -Wl,-rpath,\/home\/pingjui\/parallel-shadow-stack\/lib$/;"	m
+MAIN	Makefile	/^MAIN=main_linux.cpp$/;"	m
+MAIN_OBJECT	Makefile	/^MAIN_OBJECT=$(MAIN:.cpp=.o)$/;"	m
+OBJECTS	Makefile	/^OBJECTS=$(MAIN_OBJECT) $(C_OBJECTS) $(CPP_OBJECTS) $(C_SUPPORT_OBJECTS)$/;"	m
+SIMPLES	Makefile	/^SIMPLES=$(filter-out $(FILTER_OUT), $(wildcard CWE*0.c*) $(wildcard CWE*1.c*) $(wildcard CWE*2.c*) $(wildcard CWE*3.c*) $(wildcard CWE*4.c*)) \\$/;"	m
+SIMPLES_C	Makefile	/^SIMPLES_C=$(filter-out $(CPP_SOURCES), $(SIMPLES))$/;"	m
+SIMPLES_CPP	Makefile	/^SIMPLES_CPP=$(filter-out $(C_SOURCES), $(SIMPLES))$/;"	m
+TARGET	Makefile	/^TARGET=CWE562$/;"	m
+_TESTCASES_H	testcases.h	5;"	d
+bad	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^void bad() $/;"	f	namespace:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01
+getIntArray	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^        const int *getIntArray() $/;"	f	class:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01::HelperClass
+good	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^void good() $/;"	f	namespace:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01
+good1	CWE562_Return_of_Stack_Variable_Address__return_buf_01.c	/^static void good1() $/;"	f	file:
+good1	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^static void good1() $/;"	f	namespace:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01
+good1	CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01.c	/^static void good1() $/;"	f	file:
+helperBad	CWE562_Return_of_Stack_Variable_Address__return_buf_01.c	/^static char *helperBad()$/;"	f	file:
+helperBad	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^static const int *helperBad()$/;"	f	namespace:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01
+helperBad	CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01.c	/^static char *helperBad()$/;"	f	file:
+helperGood1	CWE562_Return_of_Stack_Variable_Address__return_buf_01.c	/^static char *helperGood1()$/;"	f	file:
+helperGood1	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^static const int *helperGood1()$/;"	f	namespace:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01
+helperGood1	CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01.c	/^static char *helperGood1()$/;"	f	file:
+intArray	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^        int intArray[2];$/;"	m	class:CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01::HelperClass	file:
+main	CWE562_Return_of_Stack_Variable_Address__return_buf_01.c	/^int main(int argc, char * argv[]) $/;"	f
+main	CWE562_Return_of_Stack_Variable_Address__return_local_class_member_01.cpp	/^int main(int argc, char * argv[]) $/;"	f
+main	CWE562_Return_of_Stack_Variable_Address__return_pointer_buf_01.c	/^int main(int argc, char * argv[]) $/;"	f
+main	main.cpp	/^int main(int argc, char * argv[]) {$/;"	f
+main	main_linux.cpp	/^int main(int argc, char * argv[]) {$/;"	f

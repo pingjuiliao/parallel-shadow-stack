@@ -1,6 +1,7 @@
 **/build
 **/a.out
 **/tmp
+**/__pycache__ 
 ./lib/*.so
 *.o
 *.exe
