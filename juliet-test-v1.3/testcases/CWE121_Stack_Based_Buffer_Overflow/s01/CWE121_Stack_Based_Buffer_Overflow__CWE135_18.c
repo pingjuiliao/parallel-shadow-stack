@@ -39,7 +39,7 @@ sink:
         size_t dataLen = strlen((char *)data);
         void * dest = (void *)ALLOCA((dataLen+1) * sizeof(wchar_t));
         (void)wcscpy(dest, data);
-        printLine((char *)dest);
+        // printLine((char *)dest);
     }
 }
 

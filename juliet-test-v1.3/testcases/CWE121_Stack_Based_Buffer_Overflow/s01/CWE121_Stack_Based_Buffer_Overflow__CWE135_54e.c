@@ -31,7 +31,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE135_54e_badSink(void * data)
         size_t dataLen = strlen((char *)data);
         void * dest = (void *)ALLOCA((dataLen+1) * sizeof(wchar_t));
         (void)wcscpy(dest, data);
-        printLine((char *)dest);
+        // printLine((char *)dest);
     }
 }
 

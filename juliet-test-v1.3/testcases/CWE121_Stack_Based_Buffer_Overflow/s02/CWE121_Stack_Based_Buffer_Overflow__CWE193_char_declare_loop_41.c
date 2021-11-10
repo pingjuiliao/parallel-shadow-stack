@@ -21,14 +21,15 @@ Template File: sources-sink-41.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 #ifndef OMITBAD
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_41_badSink(char * data)
 {
     {
-        char source[10+1] = SRC_STRING;
+        char source[200+1] = SRC_STRING;
         size_t i, sourceLen;
         sourceLen = strlen(source);
         /* Copy length + 1 to include NUL terminator from source */
@@ -37,7 +38,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_41_badSink(cha
         {
             data[i] = source[i];
         }
-        printLine(data);
+        // printLine(data);
     }
 }
 

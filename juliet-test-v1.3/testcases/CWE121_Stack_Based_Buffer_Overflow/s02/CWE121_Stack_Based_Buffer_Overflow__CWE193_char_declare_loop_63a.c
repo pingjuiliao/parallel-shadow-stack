@@ -21,7 +21,7 @@ Template File: sources-sink-63a.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
 
 #ifndef OMITBAD
 

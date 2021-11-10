@@ -20,7 +20,7 @@ Template File: sources-sink-32.tmpl.c
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memcpy_32_bad()
 {
-    int64_t * data;
+    static int64_t * data;
     int64_t * *dataPtr1 = &data;
     int64_t * *dataPtr2 = &data;
     int64_t dataBadBuffer[50];
@@ -37,8 +37,8 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memcpy_32_bad()
         {
             int64_t source[100] = {0}; /* fill with 0's */
             /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-            memcpy(data, source, 100*sizeof(int64_t));
-            printLongLongLine(data[0]);
+            memcpy(data, source, 1000*sizeof(int64_t));
+           /// printLongLongLine(data[0]);
         }
     }
 }

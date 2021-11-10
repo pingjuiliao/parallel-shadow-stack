@@ -21,7 +21,7 @@ Template File: sources-sink-17.tmpl.c
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memcpy_17_bad()
 {
     int i;
-    int64_t * data;
+    static int64_t * data;
     int64_t dataBadBuffer[50];
     int64_t dataGoodBuffer[100];
     for(i = 0; i < 1; i++)
@@ -33,8 +33,8 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memcpy_17_bad()
     {
         int64_t source[100] = {0}; /* fill with 0's */
         /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-        memcpy(data, source, 100*sizeof(int64_t));
-        printLongLongLine(data[0]);
+        memcpy(data, source, 1000*sizeof(int64_t));
+        // printLongLongLine(data[0]);
     }
 }
 

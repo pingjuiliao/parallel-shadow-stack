@@ -21,7 +21,8 @@ Template File: sources-sink-07.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 /* The variable below is not declared "const", but is never assigned
  * any other value so a tool should be able to identify that reads of
@@ -44,7 +45,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_07_bad()
         data[0] = '\0'; /* null terminate */
     }
     {
-        char source[10+1] = SRC_STRING;
+        char source[200+1] = SRC_STRING;
         size_t i, sourceLen;
         sourceLen = strlen(source);
         /* Copy length + 1 to include NUL terminator from source */
@@ -53,7 +54,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_07_bad()
         {
             data[i] = source[i];
         }
-        printLine(data);
+        // printLine(data);
     }
 }
 

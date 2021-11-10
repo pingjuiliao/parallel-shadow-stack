@@ -21,7 +21,8 @@ Template File: sources-sink-45.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 static char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_45_badData;
 static char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_45_goodG2BData;
@@ -32,7 +33,7 @@ static void badSink()
 {
     char * data = CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_45_badData;
     {
-        char source[10+1] = SRC_STRING;
+        char source[200+1] = SRC_STRING;
         size_t i, sourceLen;
         sourceLen = strlen(source);
         /* Copy length + 1 to include NUL terminator from source */
@@ -41,7 +42,7 @@ static void badSink()
         {
             data[i] = source[i];
         }
-        printLine(data);
+        // printLine(data);
     }
 }
 

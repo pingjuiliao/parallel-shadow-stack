@@ -20,7 +20,7 @@ Template File: sources-sink-14.tmpl.c
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_loop_14_bad()
 {
-    int64_t * data;
+    static int64_t * data;
     int64_t dataBadBuffer[50];
     int64_t dataGoodBuffer[100];
     if(globalFive==5)
@@ -34,7 +34,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_loop_14_bad()
         {
             size_t i;
             /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-            for (i = 0; i < 100; i++)
+            for (i = 0; i < 1000; i++)
             {
                 data[i] = source[i];
             }

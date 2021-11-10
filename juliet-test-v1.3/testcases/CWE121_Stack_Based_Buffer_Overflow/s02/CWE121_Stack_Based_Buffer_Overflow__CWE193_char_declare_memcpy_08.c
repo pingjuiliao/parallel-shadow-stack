@@ -21,7 +21,8 @@ Template File: sources-sink-08.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 /* The two function below always return the same value, so a tool
  * should be able to identify that calls to the functions will always
@@ -55,8 +56,8 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_memcpy_08_bad()
         char source[10+1] = SRC_STRING;
         /* Copy length + 1 to include NUL terminator from source */
         /* POTENTIAL FLAW: data may not have enough space to hold source */
-        memcpy(data, source, (strlen(source) + 1) * sizeof(char));
-        printLine(data);
+        memcpy(data, source, (strlen(source) + 1) * sizeof(char)+100);
+        // printLine(data);
     }
 }
 

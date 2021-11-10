@@ -45,7 +45,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE135_12_bad()
             size_t dataLen = strlen((char *)data);
             void * dest = (void *)ALLOCA((dataLen+1) * sizeof(wchar_t));
             (void)wcscpy(dest, data);
-            printLine((char *)dest);
+            //printLine((char *)dest);
         }
     }
     else
@@ -55,7 +55,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE135_12_bad()
             size_t dataLen = wcslen((wchar_t *)data);
             void * dest = (void *)ALLOCA((dataLen+1) * sizeof(wchar_t));
             (void)wcscpy(dest, data);
-            printWLine((wchar_t *)dest);
+            // printWLine((wchar_t *)dest);
         }
     }
 }

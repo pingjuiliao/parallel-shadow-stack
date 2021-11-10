@@ -41,10 +41,10 @@ sink:
         /* Print the initial block pointed to by structCharVoid.voidSecond */
         printLine((char *)structCharVoid.voidSecond);
         /* FLAW: Use the sizeof(structCharVoid) which will overwrite the pointer voidSecond */
-        memmove(structCharVoid.charFirst, SRC_STR, sizeof(structCharVoid));
+        memmove(structCharVoid.charFirst, SRC_STR, sizeof(structCharVoid)*2);
         structCharVoid.charFirst[(sizeof(structCharVoid.charFirst)/sizeof(char))-1] = '\0'; /* null terminate the string */
         printLine((char *)structCharVoid.charFirst);
-        printLine((char *)structCharVoid.voidSecond);
+        // printLine((char *)structCharVoid.voidSecond);
     }
 }
 

@@ -21,7 +21,8 @@ Template File: sources-sink-68b.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 extern char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_68_badData;
 extern char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_68_goodG2BData;
@@ -34,7 +35,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_68b_badSink()
 {
     char * data = CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_68_badData;
     {
-        char source[10+1] = SRC_STRING;
+        char source[200+1] = SRC_STRING;
         size_t i, sourceLen;
         sourceLen = strlen(source);
         /* Copy length + 1 to include NUL terminator from source */
@@ -43,7 +44,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_loop_68b_badSink()
         {
             data[i] = source[i];
         }
-        printLine(data);
+        // printLine(data);
     }
 }
 

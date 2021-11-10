@@ -21,7 +21,8 @@ Template File: sources-sink-68b.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 extern char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_68_badData;
 extern char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_68_goodG2BData;
@@ -34,10 +35,10 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_68b_badSink()
 {
     char * data = CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_68_badData;
     {
-        char source[10+1] = SRC_STRING;
+        char source[100+1] = SRC_STRING;
         /* POTENTIAL FLAW: data may not have enough space to hold source */
         strcpy(data, source);
-        printLine(data);
+        // printLine(data);
     }
 }
 

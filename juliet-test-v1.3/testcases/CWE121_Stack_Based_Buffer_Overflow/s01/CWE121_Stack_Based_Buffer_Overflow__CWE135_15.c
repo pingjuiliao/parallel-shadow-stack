@@ -47,7 +47,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE135_15_bad()
         size_t dataLen = strlen((char *)data);
         void * dest = (void *)ALLOCA((dataLen+1) * sizeof(wchar_t));
         (void)wcscpy(dest, data);
-        printLine((char *)dest);
+        // printLine((char *)dest);
     }
     break;
     default:

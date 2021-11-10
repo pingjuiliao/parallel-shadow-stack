@@ -18,27 +18,27 @@ make individual
 
 | Sink ID | status|reason/required operation if 'O' |
 |--------|-------|----------|
-| char_type_overrun_memcpy  |!0| printLine() called with a overwritten buf ptr|
-| char_type_overrun_memmove |!0| printLine() called with a overwritten buf ptr|
+| char_type_overrun_memcpy  |O| comment out printLine(voidSecond) and increase memcpy size | 
+| char_type_overrun_memmove |O| comment out printLine(voidSecond) and increase memmove size |
 | CWE129_connect_socket  |O| arbitrary write: 'nc -kl localhost 27015':26 | 
 | CWE129_fgets           |O| arbitrary write: overwrite retaddr with :18  |
 | CWE129_fscanf          |O| arbitrary write: overwrite retaddr with :14  | 
-| CWE129_large           |!1| arbitrary write but the offset is determined | 
+| CWE129_large           |!1| arbitrary write but the offset is pre-determined | 
 | CWE129_listen_socket   |O| arbitrary write: 'nc localhost 27015': 26 | 
 | CWE129_rand            |!01| arbitrary write with random offset | 
 | CWE131_loop            |!01| infinite loop due to overwritten data |
 | CWE131_memcpy          |C| alloc() allocates enough size | 
 | CWE131_memmove         |C| alloc() allocates enough size |
-| CWE135                 |!0| printLine() called with a overwritten buf ptr|
+| CWE135                 |O| comment out all printLine() after wcscpy() |
 | CWE193_char_alloca_cpy     |C| one-byte off overflow/ enough stack space | 
 | CWE193_char_alloca_loop    |C| one-byte off overflow/ enough stack space |
 | CWE193_char_alloca_memcpy  |C| one-byte off overflow/ enough stack space | 
 | CWE193_char_alloca_memmove |C| one-byte off overflow/ enough stack space |
 | CWE193_char_alloca_ncpy    |C| one-byte off overflow/ enough stack space |
-| CWE193_char_declare_cpy    |!1| one-byte off overflow |
-| CWE193_char_declare_loop   |!1| one-byte off overflow |
-| CWE193_char_declare_memcpy |!1| one-byte off overflow | 
-| CWE193_char_declare_memmove|!1| one-byte off overflow |
+| CWE193_char_declare_cpy    |O| increase src buf size, comment out printLine |
+| CWE193_char_declare_loop   |O| increase src buf size largely, comment printLine|
+| CWE193_char_declare_memcpy |O| increase memcpy size, comment out printLine |
+| CWE193_char_declare_memmove|O| increase memmove size, comment out printLine|
 | CWE193_char_declare_ncpy   |!1| one-byte off overflow |
 | CWE805_char_alloca_loop    |C| enough stack space    |
 | CWE805_char_alloca_memcpy  |C| enough stack space    |
@@ -46,17 +46,17 @@ make individual
 | CWE805_char_alloca_ncat    |C| enough stack space    |
 | CWE805_char_alloca_ncpy    |C| enough stack space    |
 | CWE805_char_alloca_snprintf|C| enough stack space    |
-| CWE805_char_declare_loop    |!0| printLine() called with a overwritten pointer |
-| CWE805_char_declare_memcpy  |!0| printLine() called with a overwritten pointer |
-| CWE805_char_declare_memmove |!0| printLine() called with a overwritten pointer |
+| CWE805_char_declare_loop    |O| increase loop / comment out printLine |
+| CWE805_char_declare_memcpy  |O| increase cpy size/ comment out pointer usage |
+| CWE805_char_declare_memmove |O| increase move size/ comment out pointer usage |
 | CWE805_char_declare_ncat    |!0| printLine() called with a overwritten pointer |
 | CWE805_char_declare_ncpy    |!0| printLine() called with a overwritten pointer |
 | CWE805_char_declare_snprintf|!0| printLine() called with a overwritten pointer |
 | CWE805_int64_t_alloca_loop   |C| enough stack space/ infinite loop |
 | CWE805_int64_t_alloca_memcpy |C| enough stack space |
 | CWE805_int64_t_alloca_memmove|C| enough stack space |
-| CWE805_int64_t_declare_loop   |!0| printLongLongLine() called with a overwritten pointer |
-| CWE805_int64_t_declare_memcpy |!0| printLongLongLine() called with a overwritten pointer |
+| CWE805_int64_t_declare_loop   |O| increase loop/ make data pointer static |
+| CWE805_int64_t_declare_memcpy |O| increase memcpy/ make data pointer static (memmove weird) |
 | CWE805_int64_t_declare_memmove|!0| printLongLongLine() called with a overwritten pointer |
 | CWE805_int_alloca_loop       |C| enough stack space/ infinite loop (overflowed data)|
 | CWE805_int_alloca_memcpy     |C| enough stack space |

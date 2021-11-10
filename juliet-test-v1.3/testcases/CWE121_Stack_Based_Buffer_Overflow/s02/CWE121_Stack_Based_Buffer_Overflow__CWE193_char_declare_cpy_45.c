@@ -21,7 +21,8 @@ Template File: sources-sink-45.tmpl.c
 #endif
 
 /* MAINTENANCE NOTE: The length of this string should equal the 10 */
-#define SRC_STRING "AAAAAAAAAA"
+// #define SRC_STRING "AAAAAAAAAA"
+#define SRC_STRING "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 static char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_45_badData;
 static char * CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_45_goodG2BData;
@@ -32,10 +33,10 @@ static void badSink()
 {
     char * data = CWE121_Stack_Based_Buffer_Overflow__CWE193_char_declare_cpy_45_badData;
     {
-        char source[10+1] = SRC_STRING;
+        char source[100+1] = SRC_STRING;
         /* POTENTIAL FLAW: data may not have enough space to hold source */
         strcpy(data, source);
-        printLine(data);
+        // printLine(data);
     }
 }
 
