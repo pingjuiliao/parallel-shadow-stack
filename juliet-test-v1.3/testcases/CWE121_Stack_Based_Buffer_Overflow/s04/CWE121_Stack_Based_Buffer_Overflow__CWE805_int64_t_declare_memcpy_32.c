@@ -37,7 +37,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memcpy_32_bad()
         {
             int64_t source[100] = {0}; /* fill with 0's */
             /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-            memcpy(data, source, 1000*sizeof(int64_t));
+            memcpy(data, source, 500*sizeof(int64_t));
            /// printLongLongLine(data[0]);
         }
     }

@@ -27,7 +27,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_loop_66b_badSink(int
         {
             size_t i;
             /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-            for (i = 0; i < 100; i++)
+            for (i = 0; i < 1000; i++)
             {
                 data[i] = source[i];
             }

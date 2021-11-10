@@ -20,7 +20,8 @@ Template File: sources-sink-15.tmpl.c
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memmove_15_bad()
 {
-    int64_t * data;
+    static int64_t * data;
+    
     int64_t dataBadBuffer[50];
     int64_t dataGoodBuffer[100];
     switch(6)
@@ -38,7 +39,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int64_t_declare_memmove_15_bad()
     {
         int64_t source[100] = {0}; /* fill with 0's */
         /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-        memmove(data, source, 100*sizeof(int64_t));
+        memmove(data, source, 500*sizeof(int64_t));
         printLongLongLine(data[0]);
     }
 }

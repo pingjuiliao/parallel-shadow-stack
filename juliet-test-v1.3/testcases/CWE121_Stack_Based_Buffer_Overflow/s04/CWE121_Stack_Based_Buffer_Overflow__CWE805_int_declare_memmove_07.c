@@ -26,7 +26,7 @@ static int staticFive = 5;
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_memmove_07_bad()
 {
-    int * data;
+    static int * data;
     int dataBadBuffer[50];
     int dataGoodBuffer[100];
     if(staticFive==5)
@@ -38,7 +38,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_memmove_07_bad()
     {
         int source[100] = {0}; /* fill with 0's */
         /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-        memmove(data, source, 100*sizeof(int));
+        memmove(data, source, 500*sizeof(int));
         printIntLine(data[0]);
     }
 }

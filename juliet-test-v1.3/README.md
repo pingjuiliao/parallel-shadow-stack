@@ -57,13 +57,13 @@ make individual
 | CWE805_int64_t_alloca_memmove|C| enough stack space |
 | CWE805_int64_t_declare_loop   |O| increase loop/ make data pointer static |
 | CWE805_int64_t_declare_memcpy |O| increase memcpy/ make data pointer static (memmove weird) |
-| CWE805_int64_t_declare_memmove|!0| printLongLongLine() called with a overwritten pointer |
+| CWE805_int64_t_declare_memmove|O| increase size/ make data pointer static|
 | CWE805_int_alloca_loop       |C| enough stack space/ infinite loop (overflowed data)|
 | CWE805_int_alloca_memcpy     |C| enough stack space |
 | CWE805_int_alloca_memmove    |C| enough stack space |
-| CWE805_int_declare_loop      |!0| printIntLine() called with a overwritten pointer |
-| CWE805_int_declare_memcpy    |!0| printIntLine() called with a overwritten pointer |
-| CWE805_int_declare_memmove   |!0| printIntLine() called with a overwritten pointer |
+| CWE805_int_declare_loop      |O| increase loop/ make data pointer static |
+| CWE805_int_declare_memcpy    |O| increase size/ make data pointer static (or memmove cause segfault)|
+| CWE805_int_declare_memmove   |O| increase size/ make data pointer static|
 | CWE805_struct_alloca_loop    |C| enough stack space/infinite loop (overflowed data) |
 | CWE805_struct_alloca_memcpy  |C| enough stack space    |
 | CWE805_struct_alloca_memmove |C| enough stack space    |

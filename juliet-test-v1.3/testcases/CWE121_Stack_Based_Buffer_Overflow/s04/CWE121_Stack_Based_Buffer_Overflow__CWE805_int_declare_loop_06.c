@@ -24,7 +24,7 @@ static const int STATIC_CONST_FIVE = 5;
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_loop_06_bad()
 {
-    int * data;
+    static int * data;
     int dataBadBuffer[50];
     int dataGoodBuffer[100];
     if(STATIC_CONST_FIVE==5)
@@ -38,7 +38,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_loop_06_bad()
         {
             size_t i;
             /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-            for (i = 0; i < 100; i++)
+            for (i = 0; i < 1000; i++)
             {
                 data[i] = source[i];
             }

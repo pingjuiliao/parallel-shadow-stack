@@ -27,7 +27,7 @@ static int staticFalse = 0; /* false */
 
 void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_memcpy_05_bad()
 {
-    int * data;
+    static int * data;
     int dataBadBuffer[50];
     int dataGoodBuffer[100];
     if(staticTrue)
@@ -39,7 +39,7 @@ void CWE121_Stack_Based_Buffer_Overflow__CWE805_int_declare_memcpy_05_bad()
     {
         int source[100] = {0}; /* fill with 0's */
         /* POTENTIAL FLAW: Possible buffer overflow if data < 100 */
-        memcpy(data, source, 100*sizeof(int));
+        memcpy(data, source, 1000*sizeof(int));
         printIntLine(data[0]);
     }
 }
