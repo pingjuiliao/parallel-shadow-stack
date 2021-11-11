@@ -90,9 +90,9 @@ X86ShadowStack::runOnMachineFunction(MachineFunction &MF) {
      * R15:  can be updated outside the procedure and therefore the use of register conflicts
      * (e.g. binutils_2.37/bfd/doc/chew.c)
      *********************************/
-    prologueReg0 = X86::R10 ;
-    prologueReg1 = X86::R11 ;
-    epilogueReg  = X86::R10 ;
+    prologueReg0 = X86::R11 ;
+    prologueReg1 = X86::R10 ;
+    epilogueReg  = X86::R11 ;
     
     functionMustReturn = false ;
 
